@@ -35,4 +35,4 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [https://abstrabit-micro-challenge-orcin.vercel.app/how-it-works](https://abstrabit-micro-challenge-orcin.vercel.app/how-it-works) with your browser to see the result.
