@@ -11,7 +11,7 @@ Abstrabit is a modern web application designed to simplify workflows and enhance
 
 ## 📚 Documentation
 
-For a detailed walkthrough of the application and its technical implementation, please visit our **[How it Works](/how-it-works)** page.
+For a detailed walkthrough of the application and its technical implementation, please visit our **[How it Works](https://abstrabit-micro-challenge-orcin.vercel.app/how-it-works)** page.
 
 ## 🛠️ Tech Stack
 
