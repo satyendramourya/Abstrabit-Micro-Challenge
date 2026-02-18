@@ -10,7 +10,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { Trash2, ExternalLink, LogOut, Loader2, Plus, LayoutGrid, Search } from "lucide-react"
+
+import { EditBookmarkDialog } from "@/components/edit-bookmark-dialog"
+import { ExternalLink, LayoutGrid, Loader2, LogOut, Pencil, Plus, Search, Trash2 } from "lucide-react"
 
 export default function Dashboard() {
   const supabase = createClient()
@@ -18,6 +20,10 @@ export default function Dashboard() {
   const [bookmarks, setBookmarks] = useState<any[]>([])
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  
+  // Edit Dialog State
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [selectedBookmark, setSelectedBookmark] = useState<any>(null)
 
   const fetchBookmarks = useCallback(async () => {
     const { data } = await supabase
@@ -42,8 +48,19 @@ export default function Dashboard() {
     getUser()
   }, [router, fetchBookmarks])
 
-  // Realtime subscription
-  useBookmarksRealtime(fetchBookmarks)
+  // Realtime subscription with Payload Handling
+  useBookmarksRealtime((payload) => {
+      // console.log("Realtime event:", payload)
+      const { eventType, new: newRecord, old: oldRecord } = payload
+
+      if (eventType === 'INSERT') {
+          setBookmarks((prev) => [newRecord, ...prev])
+      } else if (eventType === 'DELETE') {
+          setBookmarks((prev) => prev.filter((b) => b.id !== oldRecord.id))
+      } else if (eventType === 'UPDATE') {
+          setBookmarks((prev) => prev.map((b) => b.id === newRecord.id ? newRecord : b))
+      }
+  })
 
   const addBookmark = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -54,6 +71,7 @@ export default function Dashboard() {
     
     if (!title || !url || !user) return
 
+    // Optimistic update could go here, but Realtime is fast enough for now
     await supabase.from('bookmarks').insert({ 
         title, 
         url, 
@@ -64,6 +82,11 @@ export default function Dashboard() {
 
   const deleteBookmark = async (id: string) => {
     await supabase.from("bookmarks").delete().eq("id", id)
+  }
+  
+  const handleEdit = (bookmark: any) => {
+      setSelectedBookmark(bookmark)
+      setEditDialogOpen(true)
   }
 
   const signOut = async () => {
@@ -83,6 +106,15 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-neutral-50/50">
+      
+      {/* Edit Dialog */}
+      {selectedBookmark && (
+        <EditBookmarkDialog 
+            open={editDialogOpen} 
+            onOpenChange={setEditDialogOpen} 
+            bookmark={selectedBookmark} 
+        />
+      )}
       
       {/* Top Navigation Bar */}
       <header className="sticky top-0 z-30 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -171,15 +203,26 @@ export default function Dashboard() {
                                     <div className="h-8 w-8 rounded bg-neutral-100 flex items-center justify-center text-neutral-500 font-bold text-xs shrink-0 uppercase">
                                         {bookmark.title.substring(0,2)}
                                     </div>
-                                    <Button 
-                                        variant="ghost" 
-                                        size="icon" 
-                                        className="h-6 w-6 text-neutral-300 hover:text-red-500 hover:bg-red-50 -mr-2 -mt-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                                        onClick={() => deleteBookmark(bookmark.id)}
-                                        title="Delete"
-                                    >
-                                        <Trash2 className="h-3.5 w-3.5" />
-                                    </Button>
+                                    <div className="flex gap-1 -mr-2 -mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="h-6 w-6 text-neutral-300 hover:text-blue-500 hover:bg-blue-50"
+                                            onClick={() => handleEdit(bookmark)}
+                                            title="Edit"
+                                        >
+                                            <Pencil className="h-3.5 w-3.5" />
+                                        </Button>
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="h-6 w-6 text-neutral-300 hover:text-red-500 hover:bg-red-50"
+                                            onClick={() => deleteBookmark(bookmark.id)}
+                                            title="Delete"
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                        </Button>
+                                    </div>
                                 </div>
                                 <h4 className="font-semibold text-neutral-900 truncate pr-4" title={bookmark.title}>{bookmark.title}</h4>
                                 <a href={bookmark.url} target="_blank" rel="noopener noreferrer" className="text-xs text-neutral-500 hover:text-primary hover:underline truncate block mt-1">
