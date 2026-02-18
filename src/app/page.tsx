@@ -20,6 +20,9 @@ export default async function Page() {
                 <span className="text-xl font-bold tracking-tight">Abstrabit</span>
             </div>
           <nav className="flex items-center gap-4">
+            <Button asChild variant="ghost" className="text-muted-foreground hover:text-foreground">
+                <Link href="/how-it-works">How it Works</Link>
+            </Button>
             {user && (
               <Button asChild variant="ghost">
                 <Link href="/dashboard">Dashboard</Link>

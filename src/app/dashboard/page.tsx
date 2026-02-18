@@ -124,6 +124,9 @@ export default function Dashboard() {
                 <span>Dashboard</span>
             </div>
             <div className="flex items-center gap-4">
+                 <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex text-neutral-500 hover:text-neutral-900">
+                    <a href="/how-it-works" target="_blank" rel="noopener noreferrer">How it Works</a>
+                 </Button>
                 <span className="text-sm text-neutral-500 hidden sm:inline-block truncate max-w-[200px]">{user.email}</span>
                 <Button variant="ghost" size="sm" onClick={signOut} className="text-neutral-500 hover:text-red-600 hover:bg-red-50">
                     <LogOut className="h-4 w-4 mr-2" /> Sign Out
