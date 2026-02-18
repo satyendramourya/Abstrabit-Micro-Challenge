@@ -1,10 +1,14 @@
 
+
 "use client"
 
 import { useEffect } from "react"
 import { createClient } from "@/lib/supabase-browser"
+import { RealtimePostgresChangesPayload } from "@supabase/supabase-js"
 
-export function useBookmarksRealtime(onChange: () => void) {
+export function useBookmarksRealtime(
+  onChange: (payload: RealtimePostgresChangesPayload<any>) => void
+) {
   useEffect(() => {
     const supabase = createClient()
 
@@ -17,8 +21,8 @@ export function useBookmarksRealtime(onChange: () => void) {
           schema: "public",
           table: "bookmarks",
         },
-        () => {
-          onChange() // refetch bookmarks
+        (payload) => {
+          onChange(payload)
         }
       )
       .subscribe()

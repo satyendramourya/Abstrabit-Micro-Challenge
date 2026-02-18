@@ -5,6 +5,12 @@ import { useEffect, useState, useCallback } from "react"
 import { createClient } from "@/lib/supabase-browser"
 import { useBookmarksRealtime } from "@/hooks/useBookmarksRealtime"
 import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { Trash2, ExternalLink, LogOut, Loader2, Plus, LayoutGrid, Search } from "lucide-react"
 
 export default function Dashboard() {
   const supabase = createClient()
@@ -20,7 +26,7 @@ export default function Dashboard() {
       .order("created_at", { ascending: false })
 
     setBookmarks(data || [])
-  }, []) // Dependency array empty as supabase client is stable or we don't care
+  }, []) 
 
   useEffect(() => {
     const getUser = async () => {
@@ -36,10 +42,8 @@ export default function Dashboard() {
     getUser()
   }, [router, fetchBookmarks])
 
-  // ✅ REALTIME MAGIC
-  // We use useCallback for fetchBookmarks so it doesn't change on every render, preventing re-subscription loop
+  // Realtime subscription
   useBookmarksRealtime(fetchBookmarks)
-
 
   const addBookmark = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -55,13 +59,11 @@ export default function Dashboard() {
         url, 
         user_id: user.id 
     })
-    // UI updates automatically via Realtime subscription!
     form.reset()
   }
 
   const deleteBookmark = async (id: string) => {
     await supabase.from("bookmarks").delete().eq("id", id)
-    // UI updates automatically via Realtime subscription!
   }
 
   const signOut = async () => {
@@ -70,81 +72,149 @@ export default function Dashboard() {
   }
 
   if (loading) {
-      return <div className="flex justify-center items-center h-screen">Loading...</div>
+      return (
+        <div className="flex justify-center items-center h-screen bg-neutral-50">
+            <Loader2 className="h-8 w-8 animate-spin text-neutral-900" />
+        </div>
+      )
   }
 
   if (!user) return null
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-4xl mx-auto">
-        <header className="flex justify-between items-center mb-10">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-gray-600 mt-1">Welcome back, {user.email}</p>
-          </div>
-          <button 
-            onClick={signOut}
-            className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors shadow-sm text-sm font-medium"
-          >
-            Sign Out
-          </button>
-        </header>
+    <div className="min-h-screen bg-neutral-50/50">
+      
+      {/* Top Navigation Bar */}
+      <header className="sticky top-0 z-30 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-2 font-bold text-xl tracking-tight text-neutral-900">
+                <LayoutGrid className="h-6 w-6" />
+                <span>Dashboard</span>
+            </div>
+            <div className="flex items-center gap-4">
+                <span className="text-sm text-neutral-500 hidden sm:inline-block truncate max-w-[200px]">{user.email}</span>
+                <Button variant="ghost" size="sm" onClick={signOut} className="text-neutral-500 hover:text-red-600 hover:bg-red-50">
+                    <LogOut className="h-4 w-4 mr-2" /> Sign Out
+                </Button>
+            </div>
+        </div>
+      </header>
 
-        <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-            <h2 className="text-xl font-semibold mb-4 text-gray-800">Add New Bookmark</h2>
-            <form onSubmit={addBookmark} className="flex flex-col md:flex-row gap-4">
-                <input 
-                    name="title" 
-                    placeholder="Site Title" 
-                    required
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                />
-                <input 
-                    name="url" 
-                    type="url" 
-                    placeholder="https://example.com" 
-                    required
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                />
-                <button type="submit" className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm">
-                    Add Bookmark
-                </button>
-            </form>
-        </section>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        
+        {/* Input Area - Boxy & Horizontal */}
+        <div className="bg-white rounded-xl border shadow-sm p-1">
+            <div className="p-4 sm:p-6 lg:p-8">
+                <div className="mb-6">
+                    <h2 className="text-lg font-semibold tracking-tight text-neutral-900 flex items-center gap-2">
+                        <Plus className="h-5 w-5 text-neutral-500" />
+                        Add New Bookmark
+                    </h2>
+                    <p className="text-neutral-500 text-sm">Paste a URL and give it a title to save it to your collection.</p>
+                </div>
+                
+                <form onSubmit={addBookmark} className="flex flex-col md:flex-row gap-4 items-start md:items-end w-full">
+                    <div className="grid w-full gap-2">
+                        <Label htmlFor="title" className="text-xs font-medium text-neutral-500 uppercase tracking-wider">Title</Label>
+                        <Input 
+                            name="title" 
+                            id="title" 
+                            placeholder="e.g. My Favorite Blog" 
+                            required 
+                            className="bg-neutral-50 border-neutral-200 focus:bg-white transition-all h-11"
+                        />
+                    </div>
+                    <div className="grid w-full gap-2">
+                        <Label htmlFor="url" className="text-xs font-medium text-neutral-500 uppercase tracking-wider">URL</Label>
+                        <Input 
+                            name="url" 
+                            id="url" 
+                            type="url" 
+                            placeholder="https://example.com" 
+                            required 
+                            className="bg-neutral-50 border-neutral-200 focus:bg-white transition-all h-11"
+                        />
+                    </div>
+                    <Button type="submit" className="w-full md:w-auto h-11 px-8 font-medium bg-neutral-900 hover:bg-neutral-800 text-white shadow-sm whitespace-nowrap">
+                        Save Bookmark
+                    </Button>
+                </form>
+            </div>
+        </div>
 
-        <section>
-            <h2 className="text-xl font-semibold mb-4 text-gray-800">Your Bookmarks</h2>
-            {bookmarks && bookmarks.length > 0 ? (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {/* Content Area */}
+        <div className="space-y-6">
+            <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold tracking-tight text-neutral-900">
+                    Your Bookmarks <span className="ml-2 text-sm font-normal text-neutral-400 bg-neutral-100 px-2 py-0.5 rounded-full">{bookmarks.length}</span>
+                </h3>
+                {/* Search placeholder - visual only for now */}
+                {bookmarks.length > 0 && (
+                     <div className="relative w-full max-w-xs hidden sm:block">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-neutral-400" />
+                        <Input 
+                            type="search" 
+                            placeholder="Search bookmarks..." 
+                            className="w-full bg-white pl-9 h-9 text-sm"
+                            disabled
+                        />
+                    </div>
+                )}
+            </div>
+
+            {bookmarks.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {bookmarks.map((bookmark) => (
-                        <div key={bookmark.id} className="group bg-white rounded-xl p-5 shadow-sm border border-gray-200 hover:shadow-md transition-shadow relative">
-                            <a href={bookmark.url} target="_blank" rel="noopener noreferrer" className="block">
-                                <h3 className="font-semibold text-lg text-gray-900 mb-1 truncate group-hover:text-blue-600 transition-colors">{bookmark.title}</h3>
-                                <p className="text-gray-500 text-sm truncate">{bookmark.url}</p>
-                            </a>
-                            <button 
-                                onClick={() => deleteBookmark(bookmark.id)} 
-                                className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-400 hover:text-red-600" 
-                                title="Delete"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                                </svg>
-                            </button>
-                            <div className="mt-4 text-xs text-gray-400">
-                                Added {new Date(bookmark.created_at).toLocaleDateString()}
-                            </div>
+                        <div key={bookmark.id} className="group relative bg-white border rounded-lg p-5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 flex flex-col justify-between h-40">
+                             <div>
+                                <div className="flex items-start justify-between gap-2 mb-2">
+                                    <div className="h-8 w-8 rounded bg-neutral-100 flex items-center justify-center text-neutral-500 font-bold text-xs shrink-0 uppercase">
+                                        {bookmark.title.substring(0,2)}
+                                    </div>
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="h-6 w-6 text-neutral-300 hover:text-red-500 hover:bg-red-50 -mr-2 -mt-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={() => deleteBookmark(bookmark.id)}
+                                        title="Delete"
+                                    >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                    </Button>
+                                </div>
+                                <h4 className="font-semibold text-neutral-900 truncate pr-4" title={bookmark.title}>{bookmark.title}</h4>
+                                <a href={bookmark.url} target="_blank" rel="noopener noreferrer" className="text-xs text-neutral-500 hover:text-primary hover:underline truncate block mt-1">
+                                    {bookmark.url.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                                </a>
+                             </div>
+                             
+                             <div className="flex items-center justify-between pt-4 mt-auto border-t border-neutral-50">
+                                <span className="text-[10px] text-neutral-400 font-medium">
+                                    {new Date(bookmark.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                </span>
+                                <a 
+                                    href={bookmark.url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-[10px] font-medium text-neutral-500 flex items-center gap-1 hover:text-neutral-900 transition-colors"
+                                >
+                                    OPEN <ExternalLink className="h-3 w-3" />
+                                </a>
+                             </div>
                         </div>
                     ))}
                 </div>
             ) : (
-                <div className="text-center py-12 bg-white rounded-xl border border-gray-200 border-dashed">
-                    <p className="text-gray-500">No bookmarks yet. Add one above!</p>
+                <div className="rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50/50 p-12 text-center">
+                    <div className="mx-auto h-12 w-12 text-neutral-300 mb-4 bg-white rounded-full flex items-center justify-center border">
+                        <Plus className="h-6 w-6" />
+                    </div>
+                    <h3 className="mt-2 text-sm font-semibold text-neutral-900">No bookmarks added</h3>
+                    <p className="mt-1 text-sm text-neutral-500">Get started by creating a new bookmark above.</p>
                 </div>
             )}
-        </section>
-      </div>
+        </div>
+
+      </main>
     </div>
   )
 }
